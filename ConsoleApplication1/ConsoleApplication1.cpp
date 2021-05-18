@@ -3,9 +3,35 @@
 
 #include <iostream>
 
+using namespace std;
+
+int func(int y)
+{
+	cout << "func address of y is " << &y << endl;
+	return y;
+}
+
+void func2(int *y)
+{
+	cout << "func2 address of y is " << &y << endl;
+	*y = 1;
+}
+
 int main()
 {
     std::cout << "Hello World!\n";
+	int x = 2;
+	cout << "address of x is " << &x << endl;
+	int z = func(x);
+	cout << "address of z is " << &z << endl;
+	cout << "after calling func(), z = " << z << endl;
+	cout << "----------------------" << endl;
+	x = 3;
+	cout << "address of x is " << &x << endl;
+	func2(&x);
+	cout << "after calling func2(int *y), x = " << &x << endl;
+
+
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
