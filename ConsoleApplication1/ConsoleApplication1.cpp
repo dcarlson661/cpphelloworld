@@ -10,9 +10,15 @@
 #include <tuple>
 #include <bitset>
 #include <functional>
+#include <chrono>
+#include <thread>
+#include <random>
+#include <atomic>
+#include <future>
 
 using namespace std;
 using namespace std::placeholders;
+using namespace std::literals;
 
 void print(const set<int>& s)
 {
@@ -130,14 +136,100 @@ void product(double x, double y)
 	std::cout << "double " << x << "*" << y << " == " << x * y << std::endl;
 }
 
-//rememeber the real main() is at the bottom 
+
+///////////////////////////////////////////////////////
+//lesson80
+int func80()
+{
+	cout << "Executing func in thread with ID " << this_thread::get_id() << endl;
+	std::this_thread::sleep_for(5s);
+	return 42;
+
+}
+int mainPackagedTask()
+{
+	packaged_task<int(int, int)> ptask([&](int a, int b) {return a + b; });
+	future<int> fut = ptask.get_future();
+	ptask(6, 7);
+	cout << "6+7 is " << fut.get() << endl;
+
+	cout << "In main thread with ID " << this_thread::get_id() << endl;
+	cout << "Calling func..." << std::endl;
+	//auto result = std::async(std::launch::async, func80);
+    auto result = std::async(std::launch::deferred, func80);
+	//auto result = std::async(func80);
+	std::this_thread::sleep_for(2s);
+	std::cout << "Calling get()" << std::endl;
+	std::cout << result.get() << std::endl;
+
+	return 0;
+}
+
+
+//lesson77 atomic
+atomic<int> counter{ 0 };
+void task()
+{
+	for (int i = 0; i < 100'000; i++)
+	{
+		++counter;
+	}
+}
+int mainAtomic()
+{
+	vector<thread> tasks;
+	for (int i = 0; i < 10; i++)
+	{
+		tasks.push_back(thread{ task });
+	}
+	for (auto& t : tasks)
+	{
+		t.join();
+	}
+	std::cout << counter << endl;
+	return 0;
+}
+
+//rememeber the real main() is at the BOTTOM of this code 
 // and above main are the "prototypes" instead of a header or prototypes
 //
 
 //section4 misc functions like BIND
 // i had to read this explination and example to "start" to get bind with placeholders
 
-int mainMiscFunctions()
+int mainDrunkardWalk()
+{
+	vector<int> vec{ 3, 1, 4, 1, 5, 9 };
+	static mt19937 mt; //include random
+
+	static bernoulli_distribution berni;
+	//static bernoulli_distribution b(0.75);
+	int x = 1;
+	const int WIDTH = 40;
+	int sign = 1;
+
+	while (true) {
+		if (berni(mt)) {
+			sign = 1;
+		}
+		else {
+			sign = -1;
+		}
+		if (x == 1) {
+			sign = 1;
+		}
+		if (x == WIDTH) {
+			sign = -1;
+		}
+		x += sign;
+		cout << string(x, ' ') << '.' << string(WIDTH - x + 1, ' ') << "\r" << flush;
+		std::this_thread::sleep_for(100ms);
+	}
+
+	return 0;
+}
+//lesson61
+int mainMiscFunctions() 
 {
 	int n{ 2 };   //int n initialized to 2
 	// Bind n becomes the second argument of incr and is called a "capture"
@@ -188,6 +280,14 @@ int mainMiscFunctions()
 	std::cout << std::endl;
 
 	std::for_each(&arg[0], &arg[3], std::bind(square, _1)); //_1 becomes 1,2,3
+
+	string hello{ "hello," };
+	string pi(to_string(3.14159));
+	hello += pi;
+	cout << hello << endl;
+
+	cout << stoi(pi) << endl;
+	cout << stod(pi) << endl;
 
 	return 0;
 }
@@ -529,9 +629,13 @@ int mainLessonOne()
 	return 0;
 }
 
+//start here and call the study functions above
 int main()
 {
-	mainMiscFunctions();
+	mainPackagedTask();
+	//mainAtomic();
+	//mainDrunkardWalk();
+	//mainMiscFunctions();
 	//mainbitset();
 	return 0;
 }
